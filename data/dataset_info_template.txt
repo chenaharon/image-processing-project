@@ -1,0 +1,49 @@
+# Dataset Information Template
+
+Fill in this template with information about your dataset.
+
+## Dataset Overview
+- **Dataset Name**: 
+- **Source**: 
+- **Collection Date**: 
+- **Purpose**: Style classification / Motion detection / Both
+
+## Dataset Statistics
+- **Total Videos**: 
+- **Total Duration**: 
+- **Average Video Length**: 
+- **Resolution**: 
+- **Frame Rate**: 
+
+## Categories / Motion Types
+
+### Category 1: [Name]
+- **Number of Videos**: 
+- **Total Duration**: 
+- **Description**: 
+
+### Category 2: [Name]
+- **Number of Videos**: 
+- **Total Duration**: 
+- **Description**: 
+
+### Category 3: [Name]
+- **Number of Videos**: 
+- **Total Duration**: 
+- **Description**: 
+
+## Data Split
+- **Training Set**: X videos (Y%)
+- **Validation Set**: X videos (Y%)
+- **Test Set**: X videos (Y%)
+
+## Preprocessing Steps
+1. 
+2. 
+3. 
+
+## Notes
+- Any additional information about the dataset
+- Known issues or limitations
+- Special considerations
+
