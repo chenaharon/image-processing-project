@@ -2,28 +2,32 @@
 
 ## Overview
 
-This project reproduces and extends the research from:
+This project reproduces the research from:
 **"Recognizing image 'style' and activities in video using local features and naive Bayes"**
 by Daniel Keren (Pattern Recognition Letters, 2003).
 
-The system classifies image/video "style" and detects different types of motion in video sequences (translation, rotation, zoom, etc.), highlighting movement regions with color-coded visualization.
+The baseline implementation classifies video activities, specifically distinguishing between **walking** and **hand waving** (hand_wave_hello) activities, as described in Section 8 of the paper.
 
 ## Project Structure
 
 ```
 image-processing-project/
-├── code/              # Scripts and notebooks
+├── code/              # Implementation code
 │   ├── feature_extraction.py      # DCT-based feature extraction
-│   ├── naive_bayes_classifier.py  # Naive Bayes classifier implementation
-│   ├── motion_detection.py         # Motion type detection and classification
-│   ├── video_processor.py         # Video loading and processing
-│   └── run_experiment.py          # Main experiment script
+│   ├── naive_bayes_classifier.py  # Naive Bayes classifier
+│   ├── motion_detection.py         # Motion type detection
+│   └── video_processor.py         # Video loading and processing
 ├── data/              # Dataset info and preprocessing scripts
-├── results/           # Generated images, plots, metrics
-├── docs/              # Reports, slides, AI log
-│   └── ai_assistance_log.md
+│   ├── metadata/      # Train/val/test splits
+│   └── videos/       # Video files (not in repo)
+├── results/           # Trained models and evaluation results
+├── docs/              # Documentation
+│   ├── BASELINE_METHODOLOGY.md  # Detailed methodology explanation
+│   └── ai_assistance_log.md     # AI assistance log
 ├── requirements.txt   # Python dependencies
-└── README.md          # This file
+├── train_classifier.py    # Train the classifier
+├── evaluate_classifier.py # Evaluate on test set
+└── predict_video.py       # Predict on a new video
 ```
 
 ## Installation
@@ -50,19 +54,22 @@ pip install -r requirements.txt
 
 ## Usage
 
-### Training the Classifier
+### Training the Classifier (Baseline)
 
-Train the classifier on your dataset:
+Train the baseline classifier matching the paper's methodology:
 
 ```bash
 python train_classifier.py
 ```
 
 This will:
-- Load training videos from `data/metadata/train_labels.csv`
-- Extract features using 5x5x5 spatio-temporal neighborhoods (as in paper)
-- Train Naive Bayes classifier
-- Save classifier to `results/classifier.pkl`
+1. Load training videos from `data/metadata/train_labels.csv`
+2. Balance number of videos per class (take minimum)
+3. Find minimum video length and trim all videos to same length
+4. Extract features using 5×5×5 spatio-temporal neighborhoods
+5. Quantize features to 32 discrete bins
+6. Train Naive Bayes classifier with P(C_i) = n_i/n priors
+7. Save classifier to `results/classifier.pkl`
 
 ### Evaluating the Classifier
 
@@ -72,6 +79,12 @@ Evaluate the trained classifier on validation and test sets:
 python evaluate_classifier.py
 ```
 
+This will:
+- Load the trained classifier
+- Evaluate on validation set (block-level and video-level accuracy)
+- Evaluate on test set (block-level and video-level accuracy)
+- Display results for each video
+
 ### Predicting Activity Type
 
 Predict activity type for a new video:
@@ -80,92 +93,69 @@ Predict activity type for a new video:
 python predict_video.py --video path/to/video.mp4
 ```
 
-### Motion Detection and Visualization
+This will:
+- Load the trained classifier
+- Extract features from the video (trimmed to training length)
+- Predict activity type (walking or hand_wave_hello)
+- Display prediction and confidence
 
-Process a video to detect and visualize motion types:
+## Baseline Methodology
 
-```bash
-python run_experiment.py --video path/to/video.mp4 --output results/output.mp4
-```
+The baseline implementation follows the paper's methodology:
 
-### Command-line Options
+### Feature Extraction
+- **5×5×5 spatio-temporal neighborhoods**: Extract features from 5×5 spatial blocks over 5 consecutive frames
+- **64×64 resolution**: Frames resized to 64×64 (as in paper Section 8)
+- **DCT coefficients**: 10 low-frequency DCT coefficients per block (zigzag pattern)
+- **Quantization**: 32 discrete bins (0-31)
 
-- `--video`: Path to input video file (required)
-- `--output`: Path to output video file (optional, defaults to `motion_<input_name>`)
-- `--max-frames`: Maximum number of frames to process (optional)
-- `--mode`: Processing mode - `motion`, `style`, or `both` (default: `motion`)
+### Training
+- **Naive Bayes Classifier**: P(C_i) = n_i/n (class priors based on feature distribution)
+- **Balanced videos**: Equal number of videos per class, all trimmed to same length
+- **Result**: Automatically balanced feature distribution (no post-processing needed)
 
-### Python API
+### Evaluation
+- **Block-level accuracy**: Percentage of correctly classified 5×5×5 neighborhoods
+- **Video-level accuracy**: Percentage of correctly classified videos (majority vote)
 
-```python
-from code.video_processor import VideoProcessor
+For detailed methodology, see [docs/BASELINE_METHODOLOGY.md](docs/BASELINE_METHODOLOGY.md).
 
-# Initialize processor
-processor = VideoProcessor(block_size=5, num_coefficients=10, num_bins=32)
+## Hyperparameters (Matching Paper)
 
-# Process video for motion detection
-frames, visualized = processor.process_video_motion(
-    'path/to/video.mp4',
-    output_path='results/output.mp4'
-)
+| Parameter | Value | Source |
+|-----------|-------|--------|
+| Spatial block size | 5×5 | Paper Section 4 |
+| Temporal window | 5 frames | Paper Section 4 |
+| Resolution | 64×64 | Paper Section 8 |
+| DCT coefficients | 10 | Paper Section 4 |
+| Quantization bins | 32 | Standard choice |
+| Laplace smoothing (α) | 1.0 | Standard practice |
 
-# Train style classifier (requires labeled training data)
-video_paths = ['video1.mp4', 'video2.mp4', ...]
-labels = [0, 1, ...]  # Class labels
-processor.train_style_classifier(video_paths, labels)
-```
+## Data
 
-## Algorithm Overview
+- Videos are stored in `data/videos/` (not committed to repo)
+- Metadata (train/val/test splits) in `data/metadata/`
+- Only `hand_wave_hello` and `walking` categories are used (matching paper)
 
-### 1. Feature Extraction (Following Keren 2003)
-- **DCT-based features**: Extract Discrete Cosine Transform coefficients from 5x5 spatial blocks
-- **5x5x5 spatio-temporal neighborhoods**: Extract features from 5x5 spatial blocks over 5 consecutive frames
-- **64x64 resolution**: Frames are resized to 64x64 as in the paper
-- **Quantization**: Convert continuous features to discrete bins for Naive Bayes
+## Results
 
-### 2. Style Classification
-- **Naive Bayes Classifier**: Classifies image/video blocks based on local DCT features
-- Assumes feature independence (naive assumption)
-- Uses Laplace smoothing for robust probability estimation
+Output files are saved to `results/`:
+- `classifier.pkl`: Trained Naive Bayes classifier
+- `label_mapping.pkl`: Label to ID mapping
+- `feature_normalization.pkl`: Min/max values for quantization
+- `training_config.pkl`: Training configuration (video length, etc.)
 
-### 3. Motion Detection
-- **Optical Flow**: Computes dense optical flow between consecutive frames
-- **Motion Classification**: Analyzes flow patterns to identify:
-  - **Translation**: Uniform directional motion
-  - **Rotation**: Circular motion patterns
-  - **Zoom**: Radial motion from/to center
-  - **Combined**: Mixed or complex motions
-- **Visualization**: Color-codes motion regions:
-  - Black: Static
-  - Blue: Translation
-  - Green: Rotation
-  - Red: Zoom
-  - Cyan: Combined
+## Documentation
+
+- **docs/BASELINE_METHODOLOGY.md**: Complete description of baseline implementation
+- **docs/ai_assistance_log.md**: Log of all AI-assisted work (required)
 
 ## Reproducing Results
 
-### Phase 1-3: Setup and Data Preparation
-1. Review the paper and related literature
-2. Set up GitHub repository (this repo)
-3. Prepare or collect datasets as described in the paper
-
-### Phase 4: Algorithm Implementation
-Run the basic algorithm:
-```bash
-python run_experiment.py --video data/videos/category/video.mp4
-```
-
-### Phase 5: Improvements
-The system includes several enhancements beyond the paper:
-- **Motion type classification**: Enhanced motion classification using optical flow analysis (translation, rotation, zoom, combined)
-- **Color-coded motion visualization**: Visual highlighting of different motion types
-- **Extended categories**: Classification of 3+ activity types (vs. 2 in paper: walking vs. hand waving)
-
-### Phase 6-7: Visualization and Demo
-The system automatically generates:
-- Motion-classified video output
-- Color-coded motion regions
-- Reproducible results
+1. **Prepare data**: Place videos in `data/videos/hand_wave_hello/` and `data/videos/walking/`
+2. **Split dataset**: Run `python data/split_dataset.py` to create train/val/test splits
+3. **Train**: Run `python train_classifier.py`
+4. **Evaluate**: Run `python evaluate_classifier.py`
 
 ## Requirements
 
@@ -173,50 +163,16 @@ The system automatically generates:
 - OpenCV 4.5+
 - NumPy 1.21+
 - SciPy 1.7+
-- scikit-learn 1.0+
-- matplotlib 3.4+
+- pandas 1.3+
+- tqdm 4.62+
 
 See `requirements.txt` for complete list.
-
-## Data
-
-- Store only scripts and metadata in `data/` directory
-- Do NOT commit raw image/video files to repository
-- Document dataset sources and preprocessing steps
-
-## Results
-
-Output files are saved to `results/`:
-- Processed videos with motion visualization
-- Plots and metrics
-- Classification results
-
-## Documentation
-
-- `/docs/ai_assistance_log.md`: Log of all AI-assisted work (required by course guidelines)
-- `/docs/METHODOLOGY.md`: Methodology verification against the paper
-- `/docs/DATA_RECOMMENDATIONS.md`: Data collection recommendations for improved performance
-- `/docs/reading_notes.pdf`: Reading notes and literature review (to be added)
-- `/docs/final_report.pdf`: Final project report (to be added)
-- `/docs/slides.pdf`: Presentation slides (to be added)
-
-## Evaluation Criteria
-
-- Understanding of paper & literature review (10 points)
-- Data preparation & documentation (10 points)
-- Algorithm reproduction (25 points)
-- Original improvement (20 points)
-- Motion classification & visualization (10 points)
-- Working demo & reproducibility (10 points)
-- Final detailed report (10 points)
-- Presentation (5 points)
-
-
-## License
-
-This project is for academic purposes only, following the course guidelines.
 
 ## References
 
 - Keren, D. (2003). Recognizing image "style" and activities in video using local features and naive Bayes. *Pattern Recognition Letters*, 24(16), 2913-2922.
 - Paper URL: https://www.cs.haifa.ac.il/~dkeren/mypapers/style.pdf
+
+## License
+
+This project is for academic purposes only, following the course guidelines.

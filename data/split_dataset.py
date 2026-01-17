@@ -9,7 +9,6 @@ import random
 from pathlib import Path
 from typing import List, Tuple, Dict
 import pandas as pd
-from sklearn.model_selection import train_test_split
 
 
 def get_videos_by_category(video_dir: str) -> Dict[str, List[str]]:
@@ -49,7 +48,7 @@ def split_videos(video_dir: str,
                 random_seed: int = 42) -> Dict[str, Tuple[List[str], List[str]]]:
     """
     Split videos into train/val/test sets to avoid data leakage.
-    Uses stratified splitting to maintain class distribution.
+    Uses exact splitting per category to ensure balanced distribution.
     
     Args:
         video_dir: Directory containing video categories
@@ -71,58 +70,94 @@ def split_videos(video_dir: str,
     if not categories:
         raise ValueError(f"No videos found in {video_dir}")
     
-    # Prepare data for splitting
-    all_videos = []
-    all_labels = []
-    
-    for category, videos in categories.items():
-        for video in videos:
-            all_videos.append(video)
-            all_labels.append(category)
-    
-    print(f"\nTotal videos: {len(all_videos)}")
+    print(f"\nTotal videos: {sum(len(videos) for videos in categories.values())}")
     print(f"Categories: {list(categories.keys())}")
     
-    # Check if we have enough samples for stratified split
-    # Need at least 2 samples per class for stratified split
-    min_samples_per_class = min([len([l for l in all_labels if l == cat]) for cat in set(all_labels)])
-    use_stratify = min_samples_per_class >= 2
+    # Set random seed for reproducibility
+    random.seed(random_seed)
     
-    if not use_stratify:
-        print(f"Warning: Some classes have < 2 samples. Using non-stratified split.")
+    # Split each category separately to ensure exact distribution
+    train_videos = []
+    train_labels = []
+    val_videos = []
+    val_labels = []
+    test_videos = []
+    test_labels = []
     
-    # First split: train vs (val+test)
-    X_train, X_temp, y_train, y_temp = train_test_split(
-        all_videos, all_labels,
-        test_size=(val_ratio + test_ratio),
-        stratify=all_labels if use_stratify else None,
-        random_state=random_seed
-    )
+    for category, videos in categories.items():
+        # Shuffle videos for this category
+        videos_shuffled = videos.copy()
+        random.shuffle(videos_shuffled)
+        
+        total = len(videos_shuffled)
+        # Calculate counts to match ratios as closely as possible
+        # Round each count, test gets remainder to ensure exact total
+        n_train = round(total * train_ratio)
+        n_val = round(total * val_ratio)
+        n_test = total - n_train - n_val  # Remaining goes to test
+        
+        # Ensure all are non-negative
+        if n_test < 0:
+            # If test is negative, adjust train or val
+            excess = -n_test
+            if n_train > n_val:
+                n_train -= excess
+            else:
+                n_val = max(1, n_val - excess)
+            n_test = total - n_train - n_val
+        
+        # Ensure we have at least 1 in each set if possible
+        if total >= 3:
+            if n_train == 0:
+                n_train = 1
+                n_test = total - n_train - n_val
+            if n_val == 0:
+                n_val = 1
+                n_test = total - n_train - n_val
+            if n_test == 0:
+                n_test = 1
+                # Adjust train (prefer to keep train larger)
+                if n_train > n_val:
+                    n_train -= 1
+                else:
+                    n_val = max(1, n_val - 1)
+        elif total == 2:
+            n_train = 1
+            n_val = 1
+            n_test = 0
+        elif total == 1:
+            n_train = 1
+            n_val = 0
+            n_test = 0
+        
+        # Split videos
+        train_vids = videos_shuffled[:n_train]
+        val_vids = videos_shuffled[n_train:n_train + n_val]
+        test_vids = videos_shuffled[n_train + n_val:]
+        
+        train_videos.extend(train_vids)
+        train_labels.extend([category] * len(train_vids))
+        val_videos.extend(val_vids)
+        val_labels.extend([category] * len(val_vids))
+        test_videos.extend(test_vids)
+        test_labels.extend([category] * len(test_vids))
+        
+        print(f"\n{category}: {total} videos")
+        print(f"  Train: {len(train_vids)} ({len(train_vids)/total*100:.1f}%)")
+        print(f"  Val:   {len(val_vids)} ({len(val_vids)/total*100:.1f}%)")
+        print(f"  Test:  {len(test_vids)} ({len(test_vids)/total*100:.1f}%)")
     
-    # Second split: val vs test
-    val_size = val_ratio / (val_ratio + test_ratio)
-    
-    # Check if we can stratify the second split
-    min_samples_in_temp = min([len([l for l in y_temp if l == cat]) for cat in set(y_temp)])
-    use_stratify_temp = min_samples_in_temp >= 2
-    
-    X_val, X_test, y_val, y_test = train_test_split(
-        X_temp, y_temp,
-        test_size=(1 - val_size),
-        stratify=y_temp if use_stratify_temp else None,
-        random_state=random_seed
-    )
-    
-    # Print statistics
-    print(f"\nSplit results:")
-    print(f"  Training:   {len(X_train)} videos ({len(X_train)/len(all_videos)*100:.1f}%)")
-    print(f"  Validation: {len(X_val)} videos ({len(X_val)/len(all_videos)*100:.1f}%)")
-    print(f"  Test:       {len(X_test)} videos ({len(X_test)/len(all_videos)*100:.1f}%)")
+    # Print overall statistics
+    total_all = len(train_videos) + len(val_videos) + len(test_videos)
+    print(f"\nOverall split results:")
+    print(f"  Training:   {len(train_videos)} videos ({len(train_videos)/total_all*100:.1f}%)")
+    print(f"  Validation: {len(val_videos)} videos ({len(val_videos)/total_all*100:.1f}%)")
+    print(f"  Test:       {len(test_videos)} videos ({len(test_videos)/total_all*100:.1f}%)")
     
     return {
-        'train': (X_train, y_train),
-        'val': (X_val, y_val),
-        'test': (X_test, y_test)
+        'train': (train_videos, train_labels),
+        'val': (val_videos, val_labels),
+        'test': (test_videos, test_labels)
     }
 
 
@@ -180,12 +215,12 @@ def main():
                        help='Directory containing video categories')
     parser.add_argument('--output-dir', type=str, default='data/metadata',
                        help='Directory to save metadata files')
-    parser.add_argument('--train-ratio', type=float, default=0.7,
-                       help='Training set ratio (default: 0.7)')
+    parser.add_argument('--train-ratio', type=float, default=0.75,
+                       help='Training set ratio (default: 0.75)')
     parser.add_argument('--val-ratio', type=float, default=0.15,
                        help='Validation set ratio (default: 0.15)')
-    parser.add_argument('--test-ratio', type=float, default=0.15,
-                       help='Test set ratio (default: 0.15)')
+    parser.add_argument('--test-ratio', type=float, default=0.1,
+                       help='Test set ratio (default: 0.1)')
     parser.add_argument('--seed', type=int, default=42,
                        help='Random seed (default: 42)')
     

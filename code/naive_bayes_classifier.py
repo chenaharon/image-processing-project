@@ -16,6 +16,11 @@ class NaiveBayesClassifier:
     """
     Naive Bayes classifier for discrete features.
     Assumes feature independence (naive assumption).
+    
+    For binary features (num_bins=2), this implements a Bernoulli-style Naive Bayes:
+    - Each feature is modeled as an independent Bernoulli random variable
+    - P(f_i=1|C) and P(f_i=0|C) are learned from training data
+    - This matches the paper's methodology where features are binarized (0/1) after thresholding
     """
     
     def __init__(self, num_classes: int, num_features: int, num_bins: int = 32):
@@ -26,6 +31,8 @@ class NaiveBayesClassifier:
             num_classes: Number of classes to classify
             num_features: Number of features per sample
             num_bins: Number of bins for feature quantization
+                - For binary features (num_bins=2): Bernoulli-style Naive Bayes
+                - For multi-valued features (num_bins>2): Multinomial-style Naive Bayes
         """
         self.num_classes = num_classes
         self.num_features = num_features
@@ -44,20 +51,27 @@ class NaiveBayesClassifier:
         # Smoothing parameter (Laplace smoothing)
         self.alpha = 1.0
     
-    def fit(self, X: np.ndarray, y: np.ndarray):
+    def fit(self, X: np.ndarray, y: np.ndarray, balanced_priors: bool = True):
         """
         Train the classifier.
         
         Args:
             X: Training features (N, num_features) - quantized discrete values
             y: Training labels (N,)
+            balanced_priors: If True, use uniform class priors (balanced). If False, use data distribution.
         """
         N = X.shape[0]
         
         # Calculate class priors
+        # Paper methodology: P(C_i) = n_i/n (no smoothing for priors)
         for c in range(self.num_classes):
             self.class_counts[c] = np.sum(y == c)
-            self.class_priors[c] = (self.class_counts[c] + self.alpha) / (N + self.num_classes * self.alpha)
+            if balanced_priors:
+                # Use uniform priors (balanced) - each class has equal prior probability
+                self.class_priors[c] = 1.0 / self.num_classes
+            else:
+                # Use data distribution: P(C_i) = n_i/n (as in paper, no smoothing)
+                self.class_priors[c] = self.class_counts[c] / N
         
         # Calculate conditional probabilities P(feature|class)
         for c in range(self.num_classes):
@@ -144,4 +158,5 @@ class NaiveBayesClassifier:
             self.feature_probs = data['feature_probs']
             self.class_counts = data['class_counts']
             self.alpha = data['alpha']
+
 
