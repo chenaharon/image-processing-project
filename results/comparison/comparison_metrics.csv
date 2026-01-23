@@ -1,0 +1,5 @@
+Metric,Block_Level_Accuracy (%),Frame_Level_Accuracy (%),Video_Level_Accuracy (%),Classes,Block_Overlap
+Baseline,70.97,77.37,75.0,2,None
+Improved,69.04,87.93,87.5,2,Stride2
+Multiclass,50.61,64.51,66.67,3,None
+DeepLearning,0.0,0.0,0.0,3,N/A

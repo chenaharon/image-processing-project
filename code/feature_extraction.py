@@ -182,7 +182,8 @@ def extract_spatial_temporal_features(video_frames: List[np.ndarray],
                                      num_coefficients: int = 10,
                                      temporal_window: int = 5,
                                      min_activity: Optional[float] = None,
-                                     return_activities: bool = False) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
+                                     return_activities: bool = False,
+                                     target_resolution: int = 64) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
     """
     Extract spatio-temporal features from video frames using 5x5x5 neighborhoods.
     
@@ -190,12 +191,13 @@ def extract_spatial_temporal_features(video_frames: List[np.ndarray],
     activities in video using local features and naive Bayes".
     
     Args:
-        video_frames: List of video frames (should be resized to 64x64)
+        video_frames: List of video frames (will be resized to target_resolution)
         block_size: Size of spatial blocks (default: 5x5 as in paper)
         num_coefficients: Number of DCT coefficients per block
         temporal_window: Number of frames in temporal window (default: 5 as in paper)
         min_activity: Minimum temporal activity threshold for block filtering (if None, no filtering)
         return_activities: If True, also return activity array for each block
+        target_resolution: Target resolution for resizing frames (default: 64x64 as in paper)
     
     Returns:
         Tuple of (features, valid_block_mask, activities)
@@ -206,14 +208,14 @@ def extract_spatial_temporal_features(video_frames: List[np.ndarray],
     if len(video_frames) < temporal_window:
         raise ValueError(f"Need at least {temporal_window} frames for spatio-temporal features")
     
-    # Resize frames to 64x64 as in the paper
+    # Resize frames to target resolution
     resized_frames = []
     for frame in video_frames:
         if len(frame.shape) == 3:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         else:
             gray = frame.copy()
-        resized = cv2.resize(gray, (64, 64))
+        resized = cv2.resize(gray, (target_resolution, target_resolution))
         resized_frames.append(resized)
     
     if len(resized_frames) == 0:
@@ -239,8 +241,15 @@ def extract_spatial_temporal_features(video_frames: List[np.ndarray],
                 # Convert to numpy array: (5, 5, 5) spatio-temporal volume
                 st_volume = np.array(spatio_temporal_block)  # Shape: (5, 5, 5)
                 
-                # Normalize the volume
-                st_volume = st_volume.astype(np.float32) / 255.0
+                # Normalize: mean=0, std=1 (Keren 2003 methodology, Section 5)
+                # Paper states: "The blocks are first normalized to zero mean and unit variance"
+                st_volume = st_volume.astype(np.float32)
+                mean_val = np.mean(st_volume)
+                std_val = np.std(st_volume)
+                if std_val > 1e-6:  # Avoid division by zero
+                    st_volume = (st_volume - mean_val) / std_val
+                else:
+                    st_volume = st_volume - mean_val  # If std=0, just center
                 
                 # Paper methodology: Apply 3D DCT to the full 5x5x5 spatio-temporal volume
                 # This captures both spatial and temporal patterns (as in paper)
@@ -262,6 +271,97 @@ def extract_spatial_temporal_features(video_frames: List[np.ndarray],
     
     # Filter low-activity blocks if threshold is specified
     # Paper: "Blocks with a small time derivative... are not considered" for activity detection
+    if min_activity is not None:
+        valid_mask = activities_array >= min_activity
+    else:
+        valid_mask = np.ones(len(features_array), dtype=bool)
+    
+    if return_activities:
+        return features_array, valid_mask, activities_array
+    else:
+        return features_array, valid_mask, None
+
+
+def extract_spatial_temporal_features_overlapping(video_frames: List[np.ndarray], 
+                                                 block_size: int = 5,
+                                                 stride: int = 2,
+                                                 num_coefficients: int = 10,
+                                                 temporal_window: int = 5,
+                                                 min_activity: Optional[float] = None,
+                                                 return_activities: bool = False) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
+    """
+    Extract spatio-temporal features with overlapping blocks (sliding window).
+    
+    This is an improved version that uses overlapping blocks (stride < block_size)
+    instead of non-overlapping blocks. This provides better coverage and smoother predictions.
+    
+    Args:
+        video_frames: List of video frames (should be resized to 64x64)
+        block_size: Size of spatial blocks (default: 5x5)
+        stride: Stride for sliding window (default: 2 for heavy overlap)
+        num_coefficients: Number of DCT coefficients per block
+        temporal_window: Number of frames in temporal window (default: 5)
+        min_activity: Minimum temporal activity threshold for block filtering
+        return_activities: If True, also return activity array for each block
+    
+    Returns:
+        Tuple of (features, valid_block_mask, activities)
+    """
+    if len(video_frames) < temporal_window:
+        raise ValueError(f"Need at least {temporal_window} frames for spatio-temporal features")
+    
+    # Resize frames to 64x64
+    resized_frames = []
+    for frame in video_frames:
+        if len(frame.shape) == 3:
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = frame.copy()
+        resized = cv2.resize(gray, (64, 64))
+        resized_frames.append(resized)
+    
+    if len(resized_frames) == 0:
+        raise ValueError("No frames extracted from video")
+    
+    all_features = []
+    all_activities = []
+    h, w = resized_frames[0].shape
+    
+    # Extract features with overlapping blocks (sliding window)
+    # Use stride instead of block_size for sliding
+    for i in range(0, h - block_size + 1, stride):
+        for j in range(0, w - block_size + 1, stride):
+            # Slide through temporal dimension
+            for t in range(len(resized_frames) - temporal_window + 1):
+                # Extract 5x5x5 spatio-temporal block
+                spatio_temporal_block = []
+                for frame_idx in range(t, t + temporal_window):
+                    frame = resized_frames[frame_idx]
+                    spatial_block = frame[i:i+block_size, j:j+block_size]
+                    spatio_temporal_block.append(spatial_block)
+                
+                # Convert to numpy array: (5, 5, 5) spatio-temporal volume
+                st_volume = np.array(spatio_temporal_block)
+                
+                # Normalize the volume
+                st_volume = st_volume.astype(np.float32) / 255.0
+                
+                # Apply 3D DCT
+                dct_3d = dct(dct(dct(st_volume, axis=0, norm='ortho'), axis=1, norm='ortho'), axis=2, norm='ortho')
+                
+                # Extract low-frequency coefficients
+                coeffs = extract_3d_zigzag_coefficients(dct_3d, num_coefficients)
+                
+                # Compute temporal activity
+                block_activity = compute_temporal_activity(st_volume)
+                
+                all_features.append(coeffs)
+                all_activities.append(block_activity)
+    
+    features_array = np.array(all_features)
+    activities_array = np.array(all_activities)
+    
+    # Filter low-activity blocks if threshold is specified
     if min_activity is not None:
         valid_mask = activities_array >= min_activity
     else:

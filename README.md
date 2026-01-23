@@ -1,161 +1,193 @@
-# Image Processing Project - Style and Motion Recognition
+# Image Processing Project - Video Action Recognition
 
 ## Overview
 
-This project reproduces the research from:
-**"Recognizing image 'style' and activities in video using local features and naive Bayes"**
-by Daniel Keren (Pattern Recognition Letters, 2003).
+This project implements multiple pipelines for video activity recognition, based on Keren (2003) paper and extensions.
 
-The baseline implementation classifies video activities, specifically distinguishing between **walking** and **hand waving** (hand_wave_hello) activities, as described in Section 8 of the paper.
+The project includes:
+- **Baseline**: 2-class Naive Bayes classifier (reproduces Keren 2003)
+- **Improved**: 2-class Naive Bayes with higher resolution (128x128)
+- **Multiclass**: 3-class Naive Bayes (extends Improved with HELLO class)
+- **Deep Learning**: 3D CNN (R2Plus1D-18) for modern video action recognition
 
 ## Project Structure
 
 ```
 image-processing-project/
-├── code/              # Implementation code
-│   ├── feature_extraction.py      # DCT-based feature extraction
-│   ├── naive_bayes_classifier.py  # Naive Bayes classifier
-│   ├── motion_detection.py         # Motion type detection
-│   └── video_processor.py         # Video loading and processing
-├── data/              # Dataset info and preprocessing scripts
-│   ├── metadata/      # Train/val/test splits
-│   └── videos/       # Video files (not in repo)
-├── results/           # Trained models and evaluation results
-├── docs/              # Documentation
-│   ├── BASELINE_METHODOLOGY.md  # Detailed methodology explanation
-│   └── ai_assistance_log.md     # AI assistance log
-├── requirements.txt   # Python dependencies
-├── train_classifier.py    # Train the classifier
-├── evaluate_classifier.py # Evaluate on test set
-└── predict_video.py       # Predict on a new video
+├── code/                    # Core implementation modules
+│   ├── feature_extraction.py
+│   ├── naive_bayes_classifier.py
+│   ├── video_processor.py
+│   └── generate_plots.py
+├── src/                     # Pipeline implementations
+│   ├── baseline/            # Baseline pipeline (2-class, 64x64)
+│   ├── improved/            # Improved pipeline (2-class, 128x128)
+│   ├── multiclass/          # Multiclass pipeline (3-class, 128x128)
+│   ├── deep_learning/       # Deep Learning pipeline (3D CNN)
+│   ├── orchestration/       # Pipeline orchestration scripts
+│   └── utils/               # Shared utilities
+├── data/                    # Dataset and metadata
+│   ├── metadata/            # Train/val/test splits
+│   ├── videos/              # Video files (not in repo)
+│   └── unseen_videos/       # Directory for new test videos
+├── results/                  # Results from all pipelines
+│   ├── baseline/
+│   ├── improved/
+│   ├── multiclass/
+│   ├── deep_learning/
+│   └── comparison/          # Final comparison reports
+├── docs/                     # Documentation
+├── requirements.txt         # Python dependencies
+└── run_pipeline.py          # Main user interface
 ```
 
-## Installation
+## Quick Start
 
-### 1. Create and activate virtual environment
+### Installation
 
-**Windows PowerShell:**
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-```
+1. **Create virtual environment:**
+   ```bash
+   python -m venv venv
+   # Windows:
+   .\venv\Scripts\Activate.ps1
+   # Linux/Mac:
+   source venv/bin/activate
+   ```
 
-**Linux/Mac:**
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+### Running Pipelines
+
+**Main Interface (Recommended):**
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+python run_pipeline.py
 ```
 
-### 2. Install dependencies
+This provides an interactive menu to:
+- Select a pipeline (Baseline, Improved, Multiclass, Deep Learning)
+- Choose execution mode:
+  - **Full Pipeline**: Training + Evaluation + Visualization
+  - **Evaluation + Visualization**: Run on new unseen data
 
+**Individual Pipelines:**
 ```bash
-pip install -r requirements.txt
+# Baseline
+python src/orchestration/run_pipeline_baseline.py
+
+# Improved
+python src/orchestration/run_pipeline_improved.py
+
+# Multiclass
+python src/orchestration/run_pipeline_multiclass.py
+
+# Deep Learning
+python src/orchestration/run_pipeline_deep_learning.py
 ```
 
-## Usage
-
-### Training the Classifier (Baseline)
-
-Train the baseline classifier matching the paper's methodology:
-
+**Run All Pipelines:**
 ```bash
-python train_classifier.py
+python src/orchestration/run_all_pipelines.py
 ```
 
-This will:
-1. Load training videos from `data/metadata/train_labels.csv`
-2. Balance number of videos per class (take minimum)
-3. Find minimum video length and trim all videos to same length
-4. Extract features using 5×5×5 spatio-temporal neighborhoods
-5. Quantize features to 32 discrete bins
-6. Train Naive Bayes classifier with P(C_i) = n_i/n priors
-7. Save classifier to `results/classifier.pkl`
-
-### Evaluating the Classifier
-
-Evaluate the trained classifier on validation and test sets:
-
+**Generate Final Comparison:**
 ```bash
-python evaluate_classifier.py
+python src/orchestration/generate_final_comparison.py
 ```
 
-This will:
-- Load the trained classifier
-- Evaluate on validation set (block-level and video-level accuracy)
-- Evaluate on test set (block-level and video-level accuracy)
-- Display results for each video
+## Pipeline Details
 
-### Predicting Activity Type
+### Baseline Pipeline
+- **Classes**: WAVE_SIDE, WALKING (2 classes)
+- **Resolution**: 64x64
+- **Blocks**: Non-overlapping (stride=5)
+- **Methodology**: Exact Keren 2003 implementation
+- **Results**: `results_baseline/`
 
-Predict activity type for a new video:
+### Improved Pipeline
+- **Classes**: WAVE_SIDE, WALKING (2 classes)
+- **Resolution**: 128x128 (higher than baseline)
+- **Blocks**: Non-overlapping (stride=5)
+- **Improvement**: Higher resolution for better spatial detail
+- **Results**: `results_improved/`
 
-```bash
-python predict_video.py --video path/to/video.mp4
-```
+### Multiclass Pipeline
+- **Classes**: HELLO, WAVE_SIDE, WALKING (3 classes)
+- **Resolution**: 128x128 (same as Improved)
+- **Blocks**: Non-overlapping (stride=5, same as Improved)
+- **Extension**: Same methodology as Improved, but with 3 classes
+- **Results**: `results_multiclass/`
 
-This will:
-- Load the trained classifier
-- Extract features from the video (trimmed to training length)
-- Predict activity type (walking or hand_wave_hello)
-- Display prediction and confidence
+### Deep Learning Pipeline
+- **Classes**: HELLO, WAVE_SIDE, WALKING (3 classes)
+- **Architecture**: 3D CNN (R2Plus1D-18) for video action recognition
+- **Results**: `results_deep_learning/`
 
-## Baseline Methodology
+## Output Files
 
-The baseline implementation follows the paper's methodology:
+Each pipeline generates:
 
-### Feature Extraction
-- **5×5×5 spatio-temporal neighborhoods**: Extract features from 5×5 spatial blocks over 5 consecutive frames
-- **64×64 resolution**: Frames resized to 64×64 (as in paper Section 8)
-- **DCT coefficients**: 10 low-frequency DCT coefficients per block (zigzag pattern)
-- **Quantization**: 32 discrete bins (0-31)
+### Training Outputs
+- `classifier.pkl` or `model.pth` - Trained model
+- `training_config.pkl` - Training configuration
+- `label_mapping.pkl` - Label mappings
 
-### Training
-- **Naive Bayes Classifier**: P(C_i) = n_i/n (class priors based on feature distribution)
-- **Balanced videos**: Equal number of videos per class, all trimmed to same length
-- **Result**: Automatically balanced feature distribution (no post-processing needed)
+### Evaluation Outputs
+- `plots/` - Various evaluation plots (accuracy, confusion matrix, etc.)
+- `per_video_breakdown.csv` - Per-video statistics
+- `per_class_metrics.csv` - Per-class metrics
+- `confusion_matrix_detailed.csv` - Confusion matrix
+- `metrics_summary.txt` - Text summary
 
-### Evaluation
-- **Block-level accuracy**: Percentage of correctly classified 5×5×5 neighborhoods
-- **Video-level accuracy**: Percentage of correctly classified videos (majority vote)
+### Visualization Outputs
+- `visualizations/*.mp4` - Colored visualization videos
 
-For detailed methodology, see [docs/BASELINE_METHODOLOGY.md](docs/BASELINE_METHODOLOGY.md).
+## Methodology
 
-## Hyperparameters (Matching Paper)
+All Naive Bayes pipelines use:
+- **3D DCT** on 5×5×5 spatio-temporal blocks
+- **MI-based feature selection** (top 10 features)
+- **Threshold optimization** (maximize MI)
+- **Binary feature binarization**
+- **Bernoulli Naive Bayes** with P(C_i) = n_i/n priors
+- **Activity filtering**: variance >= 20.0
+- **Confidence filtering**: max_prob/min_prob >= 2.0
 
-| Parameter | Value | Source |
-|-----------|-------|--------|
-| Spatial block size | 5×5 | Paper Section 4 |
-| Temporal window | 5 frames | Paper Section 4 |
-| Resolution | 64×64 | Paper Section 8 |
-| DCT coefficients | 10 | Paper Section 4 |
-| Quantization bins | 32 | Standard choice |
-| Laplace smoothing (α) | 1.0 | Standard practice |
+## Color Schemes
 
-## Data
+**Baseline/Improved (2-class):**
+- YELLOW: hand_wave_side
+- PURPLE: walking
+- GRAY: unclassified
 
-- Videos are stored in `data/videos/` (not committed to repo)
-- Metadata (train/val/test splits) in `data/metadata/`
-- Only `hand_wave_hello` and `walking` categories are used (matching paper)
+**Multiclass (3-class):**
+- YELLOW: hand_wave_side
+- PURPLE: walking
+- BLUE: hand_wave_hello
+- GRAY: unclassified
 
-## Results
+**Deep Learning (3-class):**
+- BLUE: hand_wave_hello
+- YELLOW: hand_wave_side
+- PURPLE: walking
 
-Output files are saved to `results/`:
-- `classifier.pkl`: Trained Naive Bayes classifier
-- `label_mapping.pkl`: Label to ID mapping
-- `feature_normalization.pkl`: Min/max values for quantization
-- `training_config.pkl`: Training configuration (video length, etc.)
+## Testing on New Data
 
-## Documentation
+To evaluate and visualize on new unseen videos:
 
-- **docs/BASELINE_METHODOLOGY.md**: Complete description of baseline implementation
-- **docs/ai_assistance_log.md**: Log of all AI-assisted work (required)
+1. Place videos in `data/unseen_videos/` organized by class:
+   - `data/unseen_videos/hand_wave_hello/`
+   - `data/unseen_videos/hand_wave_side/`
+   - `data/unseen_videos/walking/`
 
-## Reproducing Results
+2. Run the main interface:
+   ```bash
+   python run_pipeline.py
+   ```
 
-1. **Prepare data**: Place videos in `data/videos/hand_wave_hello/` and `data/videos/walking/`
-2. **Split dataset**: Run `python data/split_dataset.py` to create train/val/test splits
-3. **Train**: Run `python train_classifier.py`
-4. **Evaluate**: Run `python evaluate_classifier.py`
+3. Select a pipeline and choose "Evaluation + Visualization" mode
 
 ## Requirements
 
@@ -164,14 +196,21 @@ Output files are saved to `results/`:
 - NumPy 1.21+
 - SciPy 1.7+
 - pandas 1.3+
-- tqdm 4.62+
+- PyTorch 1.9+ (for Deep Learning pipeline)
+- torchvision (for Deep Learning pipeline)
+- matplotlib, seaborn (for plotting)
 
 See `requirements.txt` for complete list.
+
+## Documentation
+
+- **src/README.md**: Detailed pipeline structure
+- **docs/BASELINE_METHODOLOGY.md**: Baseline implementation details
+- **docs/BASELINE_PAPER_COMPARISON.md**: Comparison with Keren 2003 paper
 
 ## References
 
 - Keren, D. (2003). Recognizing image "style" and activities in video using local features and naive Bayes. *Pattern Recognition Letters*, 24(16), 2913-2922.
-- Paper URL: https://www.cs.haifa.ac.il/~dkeren/mypapers/style.pdf
 
 ## License
 

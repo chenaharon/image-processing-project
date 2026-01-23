@@ -25,8 +25,8 @@ class VideoProcessor:
     Main class for processing videos and detecting motion.
     """
     
-    def __init__(self, block_size: int = 5, num_coefficients: int = 10, num_bins: int = 32, target_resolution: int = 64):
-        # Default values match paper: 10 coefficients, 32 bins, 64x64 resolution
+    def __init__(self, block_size: int = 5, num_coefficients: int = 10, num_bins: int = 32):
+        # Default values match paper: 10 coefficients, 32 bins
         """
         Initialize video processor.
         
@@ -34,12 +34,10 @@ class VideoProcessor:
             block_size: Size of blocks for feature extraction (default: 5 as in paper)
             num_coefficients: Number of DCT coefficients per block
             num_bins: Number of bins for feature quantization
-            target_resolution: Target resolution for resizing frames (default: 64 as in paper)
         """
         self.block_size = block_size
         self.num_coefficients = num_coefficients
         self.num_bins = num_bins
-        self.target_resolution = target_resolution
         self.motion_classifier = MotionClassifier()
         self.style_classifier = None
     
@@ -181,8 +179,7 @@ class VideoProcessor:
             num_coefficients=self.num_coefficients,
             temporal_window=5,  # 5 frames temporal window
             min_activity=min_activity,
-            return_activities=return_activities,
-            target_resolution=self.target_resolution
+            return_activities=return_activities
         )
         
         # Features are already in shape (N, num_coefficients)

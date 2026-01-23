@@ -28,6 +28,11 @@ data/videos/
 results/temp/
 results/*.mp4
 results/*.avi
+results_*/
+*.pth
+*.pkl
+*.h5
+*.hdf5
 
 # IDE
 .vscode/
