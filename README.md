@@ -1,5 +1,7 @@
 # Image Processing Project — Video Action Recognition
 
+Chen Aharon & Aviel Bitton
+
 End-to-end README: run the project from clone to results with no gaps.
 
 ---
