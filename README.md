@@ -69,36 +69,20 @@ pip install -r requirements.txt
 
 ## 3. Dataset (required for training and evaluation)
 
-Videos and other heavy files are **not** in the repository (see [.gitignore](.gitignore)). You must provide the video dataset yourself.
+Videos are **not** stored in the repo (large files). To get them:
 
-### Option A — You already have videos
+1. **Download** the slides ZIP from the link below.  
+2. **Extract** the ZIP into the **`data/videos`** folder of this project.
 
-Place them so that each **class** has its own folder under `data/videos/`:
-
-```
-data/
-└── videos/
-    ├── hand_wave_hello/   ← .mp4, .mov, etc.
-    ├── hand_wave_side/
-    └── walking/
-```
-
-- Baseline/Improved use only `hand_wave_side` and `walking`.
-- Multiclass and Deep Learning use all three.
-
-### Option B — Dataset download link
-
-If a dataset is provided for this course/project, download it and extract (or copy) the videos into the structure above.  
-**If you have an official link,** add it here for others:
+**Dataset download (ZIP):**
 
 ```text
-Dataset: [Add download link here if provided]
-Extract or copy videos so that:
-  data/videos/hand_wave_hello/
-  data/videos/hand_wave_side/
-  data/videos/walking/
-contain the video files (.mp4, .mov, etc.).
+https://www.dropbox.com/scl/fi/2qds6o9r239y8f61jyv13/Dataset.zip?rlkey=zfaj39gprxweyn7fghd8iw46z&st=uy1vlpwm&dl=0
 ```
+
+Use “Download” or “Direct download” on the Dropbox page, then unzip into `data/videos`.
+
+See **[data/videos/README - DOWNLOAD DATASET.md](data/videos/README - DOWNLOAD DATASET.md)** for more documentation and the same link.
 
 ### After placing videos
 
@@ -193,7 +177,7 @@ https://www.dropbox.com/scl/fi/mursqwk8i4pnff4e3ia8z/Presentataion.zip?rlkey=b78
 
 Use “Download” or “Direct download” on the Dropbox page, then unzip into `docs/`.
 
-See **[docs/README.md](docs/README.md)** for more documentation and the same link.
+See **[docs/README - SLIDES.md](docs/README - SLIDES.md)** for more documentation and the same link.
 
 ---
 
@@ -256,7 +240,7 @@ image-processing-project/
 
 | Document | Description |
 |----------|-------------|
-| [data/README.md](data/README.md) | Dataset layout, download, scripts, CSV format |
+| [data/videos/README - DOWNLOAD DATASET.md](data/README%20-%20DOWNLOAD DATASET.md) | Dataset layout, download, scripts, CSV format |
 | [docs/README.md](docs/README.md) | Docs index, slides link, baseline methodology |
 | [docs/README - SLIDES.md](docs/README%20-%20SLIDES.md) | Slides download link only |
 | [src/README.md](src/README.md) | Pipelines and orchestration commands |
