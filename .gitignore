@@ -47,6 +47,9 @@ Thumbs.db
 # Logs
 *.log
 
+# Temp commit message (used for fixing author)
+.git_commit_msg.txt
+
 # Heavy documentation (slides ZIP – use link in README; reading_notes.pdf is tracked)
 docs/*.zip
 Presentataion.zip

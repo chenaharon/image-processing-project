@@ -160,6 +160,8 @@ Each pipeline directory typically contains:
 
 Heavy outputs (e.g. `.mp4`, `.pkl`, `.pth`) are listed in [.gitignore](.gitignore) so they are not committed.
 
+To get pre-generated results (models, plots, visualization videos) without running the pipelines, see **[results/README - DOWNLOAD RESULTS.md](results/README%20-%20DOWNLOAD%20RESULTS.md)** — download the Results ZIP and extract into the project root.
+
 ---
 
 ## 6. Presentation / slides
@@ -220,8 +222,8 @@ image-processing-project/
 │   ├── deep_learning/
 │   ├── orchestration/        ← run_pipeline_*.py, run_all_pipelines, generate_final_comparison
 │   └── utils/
-├── results/                  ← comparison/ and optional baseline subdir
-├── results_baseline/         ← Created when running Baseline
+├── results/                  ← comparison/; README - DOWNLOAD RESULTS.md (ZIP link)
+├── results_baseline/         ← Created when running Baseline (or extract from Results ZIP)
 ├── results_improved/
 ├── results_multiclass/
 ├── results_deep_learning/
@@ -245,6 +247,7 @@ image-processing-project/
 | [docs/README - SLIDES.md](docs/README%20-%20SLIDES.md) | Slides download link only |
 | [src/README.md](src/README.md) | Pipelines and orchestration commands |
 | [results/README.md](results/README.md) | What is stored in results directories |
+| [results/README - DOWNLOAD RESULTS.md](results/README%20-%20DOWNLOAD%20RESULTS.md) | Results ZIP download (models, plots, videos) |
 | [docs/BASELINE_METHODOLOGY.md](docs/BASELINE_METHODOLOGY.md) | Baseline implementation details |
 | [docs/BASELINE_PAPER_COMPARISON.md](docs/BASELINE_PAPER_COMPARISON.md) | Comparison with Keren 2003 |
 

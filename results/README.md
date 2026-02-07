@@ -4,6 +4,23 @@ This directory holds **comparison** outputs when you run all pipelines and gener
 
 ---
 
+## Results download (ZIP)
+
+Results (models, plots, visualization videos) are **not** in the repo (large files). To get them:
+
+1. **Download** the Results ZIP from the link below.
+2. **Extract** the ZIP into the **project root** so you get `results_baseline/`, `results_improved/`, etc., and/or `results/comparison/`.
+
+**Results download (ZIP):**
+
+```text
+https://www.dropbox.com/scl/fi/6vwhb6z9krrx8yyre7wlr/Results.zip?rlkey=k2ft86dmxfztehg649w1off4r&st=pv4363dq&dl=0
+```
+
+See **[README - DOWNLOAD RESULTS.md](README%20-%20DOWNLOAD%20RESULTS.md)** for the same link and instructions.
+
+---
+
 ## Where results are stored
 
 | Output | Location |
