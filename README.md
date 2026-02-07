@@ -82,7 +82,7 @@ https://www.dropbox.com/scl/fi/2qds6o9r239y8f61jyv13/Dataset.zip?rlkey=zfaj39gpr
 
 Use “Download” or “Direct download” on the Dropbox page, then unzip into `data/videos`.
 
-See **[data/videos/README - DOWNLOAD DATASET.md](data/videos/README - DOWNLOAD DATASET.md)** for more documentation and the same link.
+See **[data/videos/README - DOWNLOAD DATASET.md](data/videos/README%20-%20DOWNLOAD%20DATASET.md)** for more documentation and the same link.
 
 ### After placing videos
 
@@ -240,7 +240,7 @@ image-processing-project/
 
 | Document | Description |
 |----------|-------------|
-| [data/videos/README - DOWNLOAD DATASET.md](data/README%20-%20DOWNLOAD DATASET.md) | Dataset layout, download, scripts, CSV format |
+| [data/videos/README - DOWNLOAD DATASET.md](data/videos/README%20-%20DOWNLOAD%20DATASET.md) | Dataset layout, download, scripts, CSV format |
 | [docs/README.md](docs/README.md) | Docs index, slides link, baseline methodology |
 | [docs/README - SLIDES.md](docs/README%20-%20SLIDES.md) | Slides download link only |
 | [src/README.md](src/README.md) | Pipelines and orchestration commands |
