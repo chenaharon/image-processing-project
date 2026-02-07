@@ -1,78 +1,133 @@
-# Image Processing Project - Video Action Recognition
+# Image Processing Project — Video Action Recognition
+
+End-to-end README: run the project from clone to results with no gaps.
+
+---
 
 ## Overview
 
-This project implements multiple pipelines for video activity recognition, based on Keren (2003) paper and extensions.
+This project implements several pipelines for **video activity recognition**, based on Keren (2003) and extensions:
 
-The project includes:
-- **Baseline**: 2-class Naive Bayes classifier (reproduces Keren 2003)
-- **Improved**: 2-class Naive Bayes with higher resolution (128x128)
-- **Multiclass**: 3-class Naive Bayes (extends Improved with HELLO class)
-- **Deep Learning**: 3D CNN (R2Plus1D-18) for modern video action recognition
+| Pipeline      | Classes | Resolution | Description |
+|---------------|---------|------------|-------------|
+| **Baseline**  | 2       | 64×64      | Naive Bayes, reproduces Keren 2003 |
+| **Improved**  | 2       | 128×128    | Same as Baseline, higher resolution |
+| **Multiclass**| 3       | 128×128    | Adds HELLO class (hand_wave_hello) |
+| **Deep Learning** | 3  | —          | 3D CNN (R2Plus1D-18) |
 
-## Project Structure
+**Class labels:** `hand_wave_hello`, `hand_wave_side`, `walking` (Baseline/Improved use only the last two).
 
-```
-image-processing-project/
-├── code/                    # Core implementation modules
-│   ├── feature_extraction.py
-│   ├── naive_bayes_classifier.py
-│   ├── video_processor.py
-│   └── generate_plots.py
-├── src/                     # Pipeline implementations
-│   ├── baseline/            # Baseline pipeline (2-class, 64x64)
-│   ├── improved/            # Improved pipeline (2-class, 128x128)
-│   ├── multiclass/          # Multiclass pipeline (3-class, 128x128)
-│   ├── deep_learning/       # Deep Learning pipeline (3D CNN)
-│   ├── orchestration/       # Pipeline orchestration scripts
-│   └── utils/               # Shared utilities
-├── data/                    # Dataset and metadata
-│   ├── metadata/            # Train/val/test splits
-│   ├── videos/              # Video files (not in repo)
-│   └── unseen_videos/       # Directory for new test videos
-├── results/                  # Results from all pipelines
-│   ├── baseline/
-│   ├── improved/
-│   ├── multiclass/
-│   ├── deep_learning/
-│   └── comparison/          # Final comparison reports
-├── docs/                     # Documentation
-├── requirements.txt         # Python dependencies
-└── run_pipeline.py          # Main user interface
+---
+
+## Prerequisites
+
+- **Python 3.7+** (3.8+ recommended)
+- **Git** (to clone the repo)
+- **~2GB free space** for environment and dataset (videos not in repo)
+
+---
+
+## 1. Clone and enter the project
+
+```bash
+git clone <REPO_URL>
+cd image-processing-project
 ```
 
-## Quick Start
+Replace `<REPO_URL>` with your actual repository URL.
 
-### Installation
+---
 
-1. **Create virtual environment:**
-   ```bash
-   python -m venv venv
-   # Windows:
-   .\venv\Scripts\Activate.ps1
-   # Linux/Mac:
-   source venv/bin/activate
-   ```
+## 2. Virtual environment and dependencies
 
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+python -m venv venv
+```
 
-### Running Pipelines
+**Windows (PowerShell):**
+```powershell
+.\venv\Scripts\Activate.ps1
+```
 
-**Main Interface (Recommended):**
+**Windows (CMD):**
+```cmd
+venv\Scripts\activate.bat
+```
+
+**Linux / macOS:**
+```bash
+source venv/bin/activate
+```
+
+Then install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 3. Dataset (required for training and evaluation)
+
+Videos and other heavy files are **not** in the repository (see [.gitignore](.gitignore)). You must provide the video dataset yourself.
+
+### Option A — You already have videos
+
+Place them so that each **class** has its own folder under `data/videos/`:
+
+```
+data/
+└── videos/
+    ├── hand_wave_hello/   ← .mp4, .mov, etc.
+    ├── hand_wave_side/
+    └── walking/
+```
+
+- Baseline/Improved use only `hand_wave_side` and `walking`.
+- Multiclass and Deep Learning use all three.
+
+### Option B — Dataset download link
+
+If a dataset is provided for this course/project, download it and extract (or copy) the videos into the structure above.  
+**If you have an official link,** add it here for others:
+
+```text
+Dataset: [Add download link here if provided]
+Extract or copy videos so that:
+  data/videos/hand_wave_hello/
+  data/videos/hand_wave_side/
+  data/videos/walking/
+contain the video files (.mp4, .mov, etc.).
+```
+
+### After placing videos
+
+- The first time you run a pipeline, the code will split the dataset into **train / validation / test** (e.g. 70% / 15% / 15%) and write CSVs under `data/metadata/` (`train_labels.csv`, `val_labels.csv`, `test_labels.csv`).
+- No need to run a separate script; the pipeline scripts use `data/prepare_dataset.py` when needed.
+
+See **[data/README.md](data/README.md)** for scripts (`split_dataset.py`, `prepare_videos.py`) and optional manual splitting.
+
+---
+
+## 4. Run the project (main interface)
+
+From the **project root** (where `run_pipeline.py` is):
+
 ```bash
 python run_pipeline.py
 ```
 
-This provides an interactive menu to:
-- Select a pipeline (Baseline, Improved, Multiclass, Deep Learning)
-- Choose execution mode:
-  - **Full Pipeline**: Training + Evaluation + Visualization
-  - **Evaluation + Visualization**: Run on new unseen data
+You will get:
 
-**Individual Pipelines:**
+1. **Pipeline selection:** Baseline, Improved, Multiclass, Deep Learning.
+2. **Mode selection:**
+   - **Full pipeline:** train → evaluate → visualize (use this for first run).
+   - **Evaluation + visualization:** run on existing model (e.g. on `data/unseen_videos/`).
+
+Follow the prompts. Training and evaluation results are written to the pipeline’s results folder (see below).
+
+### Run a single pipeline by script
+
 ```bash
 # Baseline
 python src/orchestration/run_pipeline_baseline.py
@@ -87,131 +142,146 @@ python src/orchestration/run_pipeline_multiclass.py
 python src/orchestration/run_pipeline_deep_learning.py
 ```
 
-**Run All Pipelines:**
+### Run all pipelines and comparison
+
 ```bash
 python src/orchestration/run_all_pipelines.py
 ```
 
-**Generate Final Comparison:**
+Then generate the final comparison report:
+
 ```bash
 python src/orchestration/generate_final_comparison.py
 ```
 
-## Pipeline Details
+Outputs go to `results/comparison/` (e.g. `comparison_metrics.csv`, `all_pipelines_comparison.txt`).
 
-### Baseline Pipeline
-- **Classes**: WAVE_SIDE, WALKING (2 classes)
-- **Resolution**: 64x64
-- **Blocks**: Non-overlapping (stride=5)
-- **Methodology**: Exact Keren 2003 implementation
-- **Results**: `results_baseline/`
+---
 
-### Improved Pipeline
-- **Classes**: WAVE_SIDE, WALKING (2 classes)
-- **Resolution**: 128x128 (higher than baseline)
-- **Blocks**: Non-overlapping (stride=5)
-- **Improvement**: Higher resolution for better spatial detail
-- **Results**: `results_improved/`
+## 5. Where results are saved
 
-### Multiclass Pipeline
-- **Classes**: HELLO, WAVE_SIDE, WALKING (3 classes)
-- **Resolution**: 128x128 (same as Improved)
-- **Blocks**: Non-overlapping (stride=5, same as Improved)
-- **Extension**: Same methodology as Improved, but with 3 classes
-- **Results**: `results_multiclass/`
+| Pipeline       | Results directory (project root)   |
+|----------------|-------------------------------------|
+| Baseline       | `results_baseline/` (or `results/baseline/` if that exists) |
+| Improved       | `results_improved/`                 |
+| Multiclass     | `results_multiclass/`               |
+| Deep Learning  | `results_deep_learning/`            |
+| Comparison     | `results/comparison/`               |
 
-### Deep Learning Pipeline
-- **Classes**: HELLO, WAVE_SIDE, WALKING (3 classes)
-- **Architecture**: 3D CNN (R2Plus1D-18) for video action recognition
-- **Results**: `results_deep_learning/`
+Each pipeline directory typically contains:
 
-## Output Files
+- Trained model: `classifier.pkl` or `model.pth`, `training_config.pkl`, `label_mapping.pkl`
+- Evaluation: `plots/`, `per_video_breakdown.csv`, `per_class_metrics.csv`, `confusion_matrix_detailed.csv`, `metrics_summary.txt`
+- Visualizations: `visualizations/*.mp4` (color-coded block overlay videos)
 
-Each pipeline generates:
+Heavy outputs (e.g. `.mp4`, `.pkl`, `.pth`) are listed in [.gitignore](.gitignore) so they are not committed.
 
-### Training Outputs
-- `classifier.pkl` or `model.pth` - Trained model
-- `training_config.pkl` - Training configuration
-- `label_mapping.pkl` - Label mappings
+---
 
-### Evaluation Outputs
-- `plots/` - Various evaluation plots (accuracy, confusion matrix, etc.)
-- `per_video_breakdown.csv` - Per-video statistics
-- `per_class_metrics.csv` - Per-class metrics
-- `confusion_matrix_detailed.csv` - Confusion matrix
-- `metrics_summary.txt` - Text summary
+## 6. Presentation / slides
 
-### Visualization Outputs
-- `visualizations/*.mp4` - Colored visualization videos
+Project slides are **not** stored in the repo (large files). To get them:
 
-## Methodology
+1. **Download** the slides ZIP from the link below.  
+2. **Extract** the ZIP into the **`docs`** folder of this project (so that slide files sit under `docs/`).
 
-All Naive Bayes pipelines use:
-- **3D DCT** on 5×5×5 spatio-temporal blocks
-- **MI-based feature selection** (top 10 features)
-- **Threshold optimization** (maximize MI)
-- **Binary feature binarization**
-- **Bernoulli Naive Bayes** with P(C_i) = n_i/n priors
-- **Activity filtering**: variance >= 20.0
-- **Confidence filtering**: max_prob/min_prob >= 2.0
+**Slides download (ZIP):**
 
-## Color Schemes
+```text
+https://www.dropbox.com/scl/fi/mursqwk8i4pnff4e3ia8z/Presentataion.zip?rlkey=b78y75vpf0qygoyl2p3iwk5je&st=huhuq9yg&dl=0
+```
 
-**Baseline/Improved (2-class):**
-- YELLOW: hand_wave_side
-- PURPLE: walking
-- GRAY: unclassified
+Use “Download” or “Direct download” on the Dropbox page, then unzip into `docs/`.
 
-**Multiclass (3-class):**
-- YELLOW: hand_wave_side
-- PURPLE: walking
-- BLUE: hand_wave_hello
-- GRAY: unclassified
+See **[docs/README.md](docs/README.md)** for more documentation and the same link.
 
-**Deep Learning (3-class):**
-- BLUE: hand_wave_hello
-- YELLOW: hand_wave_side
-- PURPLE: walking
+---
 
-## Testing on New Data
+## 7. Testing on new (unseen) videos
 
-To evaluate and visualize on new unseen videos:
-
-1. Place videos in `data/unseen_videos/` organized by class:
+1. Put videos in `data/unseen_videos/` by class:
    - `data/unseen_videos/hand_wave_hello/`
    - `data/unseen_videos/hand_wave_side/`
    - `data/unseen_videos/walking/`
-
-2. Run the main interface:
+2. Run:
    ```bash
    python run_pipeline.py
    ```
+3. Choose the pipeline and then **“Evaluation + Visualization”** so it uses the existing model and the unseen videos.
 
-3. Select a pipeline and choose "Evaluation + Visualization" mode
+---
 
-## Requirements
+## 8. Project structure (summary)
+
+```
+image-processing-project/
+├── README.md                 ← This file
+├── run_pipeline.py           ← Main entry (interactive menu)
+├── requirements.txt
+├── .gitignore                ← Excludes videos, models, heavy PDFs/ZIPs
+├── code/                     ← Core modules (feature extraction, classifier, etc.)
+├── data/
+│   ├── README.md             ← Dataset layout, scripts, download notes
+│   ├── metadata/             ← train/val/test CSV labels (generated)
+│   ├── videos/               ← Your videos (not in git): hand_wave_hello/, hand_wave_side/, walking/
+│   ├── unseen_videos/        ← Optional: extra test videos by class
+│   ├── prepare_dataset.py    ← Used by pipelines for split
+│   ├── split_dataset.py      ← Standalone split script
+│   └── prepare_videos.py     ← Resize, extract frames, etc.
+├── src/
+│   ├── README.md             ← Pipeline layout and commands
+│   ├── baseline/             ← Baseline pipeline scripts
+│   ├── improved/
+│   ├── multiclass/
+│   ├── deep_learning/
+│   ├── orchestration/        ← run_pipeline_*.py, run_all_pipelines, generate_final_comparison
+│   └── utils/
+├── results/                  ← comparison/ and optional baseline subdir
+├── results_baseline/         ← Created when running Baseline
+├── results_improved/
+├── results_multiclass/
+├── results_deep_learning/
+└── docs/
+    ├── README.md             ← Documentation index + slides link
+    ├── README - SLIDES.md    ← Slides download only
+    ├── ai_assistance_log.md  ← Log of AI-assisted work (course requirement)
+    ├── BASELINE_METHODOLOGY.md
+    ├── BASELINE_PAPER_COMPARISON.md
+    └── ... (other docs)
+```
+
+---
+
+## 9. Documentation index
+
+| Document | Description |
+|----------|-------------|
+| [data/README.md](data/README.md) | Dataset layout, download, scripts, CSV format |
+| [docs/README.md](docs/README.md) | Docs index, slides link, baseline methodology |
+| [docs/README - SLIDES.md](docs/README%20-%20SLIDES.md) | Slides download link only |
+| [src/README.md](src/README.md) | Pipelines and orchestration commands |
+| [results/README.md](results/README.md) | What is stored in results directories |
+| [docs/BASELINE_METHODOLOGY.md](docs/BASELINE_METHODOLOGY.md) | Baseline implementation details |
+| [docs/BASELINE_PAPER_COMPARISON.md](docs/BASELINE_PAPER_COMPARISON.md) | Comparison with Keren 2003 |
+
+---
+
+## 10. Requirements (summary)
 
 - Python 3.7+
-- OpenCV 4.5+
-- NumPy 1.21+
-- SciPy 1.7+
-- pandas 1.3+
-- PyTorch 1.9+ (for Deep Learning pipeline)
-- torchvision (for Deep Learning pipeline)
-- matplotlib, seaborn (for plotting)
+- OpenCV, NumPy, SciPy, pandas, scikit-learn, matplotlib, seaborn
+- PyTorch and torchvision for the Deep Learning pipeline
 
-See `requirements.txt` for complete list.
+See [requirements.txt](requirements.txt) for pinned versions.
 
-## Documentation
+---
 
-- **src/README.md**: Detailed pipeline structure
-- **docs/BASELINE_METHODOLOGY.md**: Baseline implementation details
-- **docs/BASELINE_PAPER_COMPARISON.md**: Comparison with Keren 2003 paper
+## 11. References
 
-## References
+- Keren, D. (2003). Recognizing image "style" and activities in video using local features and naive Bayes. *Pattern Recognition Letters*, 24(16), 2913–2922.
 
-- Keren, D. (2003). Recognizing image "style" and activities in video using local features and naive Bayes. *Pattern Recognition Letters*, 24(16), 2913-2922.
+---
 
-## License
+## 12. License
 
-This project is for academic purposes only, following the course guidelines.
+This project is for academic use only, in line with the course guidelines.

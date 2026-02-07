@@ -91,26 +91,26 @@ This creates:
 - **Classes**: WAVE_SIDE, WALKING (2 classes)
 - **Blocks**: Non-overlapping (stride=5)
 - **Methodology**: Exact Keren 2003 implementation
-- **Results**: `results/baseline/`
+- **Results**: `results_baseline/` or `results/baseline/` (project root)
 
 ### Improved Pipeline
 - **Classes**: WAVE_SIDE, WALKING (2 classes)
 - **Resolution**: 128x128 (higher than baseline's 64x64)
 - **Blocks**: Non-overlapping (stride=5)
 - **Improvement**: Higher resolution for better spatial detail
-- **Results**: `results_improved/`
+- **Results**: `results_improved/` (project root)
 
 ### Multiclass Pipeline
 - **Classes**: HELLO, WAVE_SIDE, WALKING (3 classes)
 - **Resolution**: 128x128 (same as Improved)
 - **Blocks**: Non-overlapping (stride=5, same as Improved)
 - **Extension**: Same methodology as Improved, but with 3 classes (adds HELLO)
-- **Results**: `results_multiclass/`
+- **Results**: `results_multiclass/` (project root)
 
 ### Deep Learning Pipeline
 - **Classes**: HELLO, WAVE_SIDE, WALKING (3 classes)
 - **Architecture**: 3D CNN (R2Plus1D-18) for video action recognition
-- **Results**: `results_deep_learning/`
+- **Results**: `results_deep_learning/` (project root)
 
 ## Output Files
 

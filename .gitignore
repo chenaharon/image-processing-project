@@ -14,15 +14,10 @@ build/
 # Data files (keep metadata, exclude raw images/videos)
 data/raw/
 data/videos/
+**/videos/
 *.mp4
 *.avi
 *.mov
-*.jpg
-*.jpeg
-*.png
-*.bmp
-*.tiff
-*.gif
 
 # Results
 results/temp/
@@ -51,6 +46,10 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Heavy documentation (slides ZIP – use link in README; reading_notes.pdf is tracked)
+docs/*.zip
+Presentataion.zip
 
 
 
